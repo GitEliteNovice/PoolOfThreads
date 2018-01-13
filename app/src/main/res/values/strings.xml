@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">PoolOfThreads</string>
+    <string name="start_pool">Start passing Runnable</string>
+
+</resources>
