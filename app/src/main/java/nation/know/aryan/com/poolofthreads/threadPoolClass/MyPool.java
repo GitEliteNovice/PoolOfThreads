@@ -6,14 +6,13 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import nation.know.aryan.com.poolofthreads.Executor.MainThreadExecutor;
 import nation.know.aryan.com.poolofthreads.Acitivity.MainActivity;
+import nation.know.aryan.com.poolofthreads.rejectedExecutionHandler.MyRejectedExecutionHandler;
 import nation.know.aryan.com.poolofthreads.threadFactory.PriorityThreadFactory;
 import nation.know.aryan.com.poolofthreads.Interface.ShowDataFromBackground;
 
@@ -30,6 +29,9 @@ public class MyPool {
     static final int Done = 1;
     static final int Failed = 0;
 
+    // Rejecton Handler
+    MyRejectedExecutionHandler rejectionHandler;
+
     private ThreadPoolExecutor mForBackgroundTasks;
     /*
        * thread pool executor for light weight background tasks
@@ -43,7 +45,7 @@ public class MyPool {
 
     private ShowDataFromBackground showDataFromBackground;
 
-    private Executor mMainThreadExecutor;
+
     /*
     * an instance of DefaultExecutorSupplier
     */
@@ -72,7 +74,7 @@ public class MyPool {
         // setting the thread factory
         ThreadFactory backgroundPriorityThreadFactory = new
                 PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND);
-
+          rejectionHandler = new MyRejectedExecutionHandler();
         // setting the thread pool executor for mForBackgroundTasks;
         mForBackgroundTasks = new ThreadPoolExecutor(
                 NUMBER_OF_CORES * 2,
@@ -80,7 +82,7 @@ public class MyPool {
                 60L,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(),
-                backgroundPriorityThreadFactory
+                backgroundPriorityThreadFactory,rejectionHandler
         );
 
         // setting the thread pool executor for mForLightWeightBackgroundTasks;
@@ -90,26 +92,17 @@ public class MyPool {
                 60L,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(),
-                backgroundPriorityThreadFactory
+                backgroundPriorityThreadFactory,rejectionHandler
         );
 
-        // setting the thread pool executor for mMainThreadExecutor;
-        mMainThreadExecutor = new MainThreadExecutor();
 
         mHandler=new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message inputMessage) {
-              //  switch (inputMessage.what) {
-  //                  case Done:
 
                         showDataFromBackground.showit(String.valueOf(inputMessage.what));
-/*
-                    case Failed:
 
 
-                        showDataFromBackground.showit("Failed");
-
-                }*/
             }
         };
 
@@ -133,20 +126,12 @@ public class MyPool {
     /*
     * returns the thread pool executor for main thread task
     */
-    public Executor forMainThreadTasks() {
-        return mMainThreadExecutor;
-    }
+
 
 
     public void PasInfofromRunnable(int data) {
-  //      if (data==0){
-            Message completeMessage = mHandler.obtainMessage(data);
+          Message completeMessage = mHandler.obtainMessage(data);
             completeMessage.sendToTarget();
-/*
-        }else if (data==1){
 
-            Message completeMessage = mHandler.obtainMessage(Done);
-            completeMessage.sendToTarget();
-        }*/
     }
 }
